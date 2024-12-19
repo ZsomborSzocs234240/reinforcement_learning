@@ -9,8 +9,6 @@ task = Task.init(
     task_name='OT2 Experiment Version 1'
 )
 
-task.set_package_repo("https://github.com/ZsomborSzocs234240/reinforcement_learning")
-
 task.set_base_docker('deanis/2023y2b-rl:latest')
 task.execute_remotely(queue_name="default")
 
