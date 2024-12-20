@@ -1,7 +1,11 @@
 import argparse
 from stable_baselines3 import PPO
 from clearml import Task
+import pybullet as p
 from robotics_wrapper_v1 import OT2Env
+
+# Ensure Direct mode
+physicsClient = p.connect(p.DIRECT)
 
 # Initialize ClearML
 task = Task.init(

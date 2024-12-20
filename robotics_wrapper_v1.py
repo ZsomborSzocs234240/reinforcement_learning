@@ -1,6 +1,7 @@
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
+import pybullet as p
 from sim_class import Simulation
 
 class OT2Env(gym.Env):
