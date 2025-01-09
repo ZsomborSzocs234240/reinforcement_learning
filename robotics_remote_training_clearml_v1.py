@@ -7,6 +7,9 @@ from clearml import Task
 import pybullet as p
 from robotics_wrapper_v1 import OT2Env
 
+Task.add_requirements("shimmy>=2.0")
+os.system("pip install shimmy>=2.0")
+
 # Ensure Direct mode for PyBullet (headless execution)
 physicsClient = p.connect(p.DIRECT)
 p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
