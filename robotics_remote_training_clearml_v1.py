@@ -10,7 +10,7 @@ physicsClient = p.connect(p.DIRECT)
 # Initialize ClearML
 task = Task.init(
     project_name='Mentor Group K/Group 2',  
-    task_name='OT2 Experiment Version 1'
+    task_name='OT2 Experiment Version 1 234240'
 )
 
 task.set_base_docker('deanis/2023y2b-rl:latest')

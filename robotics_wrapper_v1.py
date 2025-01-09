@@ -56,6 +56,7 @@ class OT2Env(gym.Env):
     def step(self, action):
         # Execute one time step within the environment
         # since we are only controlling the pipette position, we accept 3 values for the action and need to append 0 for the drop action
+        action = np.clip(action, self.action_space.low, self.action_space.high)
         action = np.append(action, 0)
 
         # Call the environment step function
@@ -69,27 +70,58 @@ class OT2Env(gym.Env):
         # Calculate the reward, this is something that you will need to experiment with to get the best results
         distance_to_goal = np.linalg.norm(pipette_position - self.goal_position)
         print(f"Distance to goal: {distance_to_goal}") # Debug
-        reward = -distance_to_goal
-        
+
         # next we need to check if the if the task has been completed and if the episode should be terminated
         # To do this we need to calculate the distance between the pipette position and the goal position and if it is below a certain threshold, we will consider the task complete. 
         # What is a reasonable threshold? Think about the size of the pipette tip and the size of the plants.
-        threshold = 0.01
-        
-        if distance_to_goal < threshold:
-            terminated = True
+
+        # Initialize the reward
+        reward = 0.0
+
+        # Distance based reward
+        reward -= 10 * distance_to_goal
+
+        # Penalize large actions
+        action_penalty = np.linalg.norm(action[:3]) * 0.2  # Scale penalty
+        reward -= action_penalty
+
+        # Time penalty
+        time_penalty = 0.02  # Small negative reward for each step
+        reward -= time_penalty
+
+        # Success reward
+        dynamic_threshold = max(0.01, 0.1 / (self.steps + 1))
+
+        if distance_to_goal < dynamic_threshold:
             # we can also give the agent a positive reward for completing the task
             reward += 100.0
+            terminated = True
         else:
             terminated = False
 
-        # next we need to check if the episode should be truncated, we can check if the current number of steps is greater than the maximum number of steps
-        if self.steps >= self.max_steps:
-            truncated = True
-        else:
-            truncated = False
+        # Panalize boundary violations
+        workspace_bounds = {
+            "x": (-0.2600, 0.1800),
+            "y": (-0.2600, 0.1300),
+            "z": (0.0800, 0.2000)
+        }
+        if not (
+            workspace_bounds["x"][0] <= pipette_position[0] <= workspace_bounds["x"][1] and
+            workspace_bounds["y"][0] <= pipette_position[1] <= workspace_bounds["y"][1] and
+            workspace_bounds["z"][0] <= pipette_position[2] <= workspace_bounds["z"][1]
+        ):
+            out_of_bounds_penalty = 10.0
+            reward -= out_of_bounds_penalty
 
-        info = {} # we don't need to return any additional information
+        # next we need to check if the episode should be truncated, we can check if the current number of steps is greater than the maximum number of steps
+        truncated = self.steps >= self.max_steps
+
+        info = {
+            "distance_to_goal": distance_to_goal,
+            "action_penalty": action_penalty,
+            "time_penalty": time_penalty,
+            "dynamic_threshold": dynamic_threshold,
+        } # Debug
 
         # Save current distance for next step
         self.previous_distance = distance_to_goal
