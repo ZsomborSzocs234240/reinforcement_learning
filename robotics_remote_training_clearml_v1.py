@@ -9,6 +9,7 @@ from robotics_wrapper_v1 import OT2Env
 
 # Ensure Direct mode for PyBullet (headless execution)
 physicsClient = p.connect(p.DIRECT)
+p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
 
 # Initialize ClearML task
 task = Task.init(
