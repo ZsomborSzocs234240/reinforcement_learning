@@ -1,3 +1,5 @@
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 import argparse
 from stable_baselines3 import PPO
 from clearml import Task
