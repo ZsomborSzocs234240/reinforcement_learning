@@ -1,5 +1,6 @@
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
 import argparse
 from stable_baselines3 import PPO
 from clearml import Task
@@ -12,7 +13,7 @@ physicsClient = p.connect(p.DIRECT)
 # Initialize ClearML task
 task = Task.init(
     project_name='Mentor Group K/Group 2',
-    task_name='OT2 Experiment Version 1 234240'
+    task_name='OT2 Experiment 234240'
 )
 
 # Use Docker container for remote execution
