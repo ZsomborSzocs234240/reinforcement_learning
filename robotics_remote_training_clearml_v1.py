@@ -52,7 +52,7 @@ model = PPO(
 # Train the model
 try:
     print("Starting training...")
-    model.learn(total_timesteps=1000000)
+    model.learn(total_timesteps=100000)
     print("Training completed successfully.")
 except Exception as e:
     print(f"Training failed: {e}")
