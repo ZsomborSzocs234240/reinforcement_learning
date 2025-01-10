@@ -5,7 +5,7 @@ os.environ['SDL_AUDIODRIVER'] = 'dummy'
 import argparse
 from stable_baselines3 import PPO
 from clearml import Task
-from stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
 from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.monitor import Monitor
