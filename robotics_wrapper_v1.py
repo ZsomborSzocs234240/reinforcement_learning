@@ -85,10 +85,6 @@ class OT2Env(gym.Env):
         action_penalty = np.linalg.norm(action[:3]) * 0.2  # Scale penalty
         reward -= action_penalty
 
-        # Time penalty
-        time_penalty = 0.02  # Small negative reward for each step
-        reward -= time_penalty
-
         # Success reward
         dynamic_threshold = max(0.01, 0.1 / (self.steps + 1))
 
@@ -113,23 +109,15 @@ class OT2Env(gym.Env):
             out_of_bounds_penalty = 10.0
             reward -= out_of_bounds_penalty
 
-        # next we need to check if the episode should be truncated, we can check if the current number of steps is greater than the maximum number of steps
-        truncated = self.steps >= self.max_steps
-
-        info = {
-            "distance_to_goal": distance_to_goal,
-            "action_penalty": action_penalty,
-            "time_penalty": time_penalty,
-            "dynamic_threshold": dynamic_threshold,
-        } # Debug
-
-        # Save current distance for next step
-        self.previous_distance = distance_to_goal
+        # Print information
+        print(f"Reward: {reward}")
+        print(f"Action penalty: {action_penalty}")
+        print(f"Terminated: {terminated}")
 
         # increment the number of steps
         self.steps += 1
 
-        return observation, reward, terminated, truncated, info
+        return observation, reward, terminated, {}
 
     def render(self, mode='human'):
         pass

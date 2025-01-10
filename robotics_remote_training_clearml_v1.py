@@ -2,11 +2,13 @@ import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
-
 import argparse
 from stable_baselines3 import PPO
 from clearml import Task
 from stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.envs import DummyVecEnv
+from stable_baselines3.common.evaluation import evaluate_policy
+from stable_baselines3.common.monitor import Monitor
 import pybullet as p
 from robotics_wrapper_v1 import OT2Env
 
@@ -21,7 +23,7 @@ p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
 # Initialize ClearML task
 task = Task.init(
     project_name='Mentor Group K/Group 2',
-    task_name='OT2 Experiment 234240'
+    task_name='OT2 Experiment 2 234240'
 )
 
 # Use Docker container for remote execution
@@ -41,6 +43,8 @@ task.connect(vars(args))
 
 # Initialize the custom environment
 env = OT2Env(render=False, max_steps=1000)
+env = Monitor(env)
+env = DummyVecEnv([lambda: env])
 
 # Define a custom callback to log metrics
 class ClearMLCallback(BaseCallback):
@@ -60,7 +64,22 @@ class ClearMLCallback(BaseCallback):
         return True
 
 # Initialize the callback
-callback = ClearMLCallback(task)
+clearml_callback = ClearMLCallback(task)
+
+# Initialize the evaluation environment
+eval_env = OT2Env(render=False, max_steps=1000)
+eval_env = Monitor(eval_env)
+eval_env = DummyVecEnv([lambda: eval_env])
+
+# Initialize the evaluation callback
+eval_callback = EvalCallback(
+    eval_env,
+    best_model_save_path='./logs/',
+    log_path='./logs/',
+    eval_freq=5000,
+    deterministic=True,
+    render=False
+)
 
 # Configure the PPO model with hyperparameters
 model = PPO(
@@ -74,25 +93,7 @@ model = PPO(
 )
 
 # Train the model
-try:
-    print("Starting training...")
-    model.learn(total_timesteps=1000000, callback=callback)
-    print("Training completed successfully.")
-except Exception as e:
-    print(f"Training failed: {e}")
-    raise
+model.learn(total_timesteps=1000000, callback=[clearml_callback, eval_callback])
 
 # Save the trained model
-model_save_path = "ot2_trained_model.zip"
-model.save(model_save_path)
-print(f"Model saved at {model_save_path}")
-
-# Register the model with ClearML
-task.upload_artifact(name='trained_model', artifact_object=model_save_path)
-print("Model registered with ClearML")
-
-# Close the environment
-env.close()
-
-# Disconnect PyBullet
-p.disconnect()
+model.save("ppo_ot2_model.zip")
