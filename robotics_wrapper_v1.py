@@ -117,7 +117,7 @@ class OT2Env(gym.Env):
         # increment the number of steps
         self.steps += 1
 
-        return observation, reward, terminated, {}
+        return observation, reward, terminated, False, {}
 
     def render(self, mode='human'):
         pass
