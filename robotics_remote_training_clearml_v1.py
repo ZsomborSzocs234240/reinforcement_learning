@@ -1,12 +1,16 @@
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
+os.environ['SDL_AUDIODRIVER'] = 'dummy'
 
 import argparse
 from stable_baselines3 import PPO
 from clearml import Task
+from stable_baselines3.common.callbacks import BaseCallback
 import pybullet as p
 from robotics_wrapper_v1 import OT2Env
 
+# Add shimmy as a requirement
 Task.add_requirements("shimmy>=2.0")
 os.system("pip install shimmy>=2.0")
 
@@ -38,6 +42,26 @@ task.connect(vars(args))
 # Initialize the custom environment
 env = OT2Env(render=False, max_steps=1000)
 
+# Define a custom callback to log metrics
+class ClearMLCallback(BaseCallback):
+    def __init__(self, task, verbose=0):
+        super(ClearMLCallback, self).__init__(verbose)
+        self.task = task
+
+    def _on_step(self) -> bool:
+        # Log the reward
+        reward = self.locals['rewards']
+        self.task.get_logger().report_scalar(
+            title='Reward',
+            series='reward',
+            value=reward,
+            iteration=self.num_timesteps
+        )
+        return True
+
+# Initialize the callback
+callback = ClearMLCallback(task)
+
 # Configure the PPO model with hyperparameters
 model = PPO(
     'MlpPolicy',
@@ -52,16 +76,20 @@ model = PPO(
 # Train the model
 try:
     print("Starting training...")
-    model.learn(total_timesteps=100000)
+    model.learn(total_timesteps=1000000, callback=callback)
     print("Training completed successfully.")
 except Exception as e:
     print(f"Training failed: {e}")
     raise
 
 # Save the trained model
-model_save_path = "ot2_trained_model"
+model_save_path = "ot2_trained_model.zip"
 model.save(model_save_path)
 print(f"Model saved at {model_save_path}")
+
+# Register the model with ClearML
+task.upload_artifact(name='trained_model', artifact_object=model_save_path)
+print("Model registered with ClearML")
 
 # Close the environment
 env.close()
