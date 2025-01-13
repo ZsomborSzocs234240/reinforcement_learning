@@ -2,23 +2,66 @@ import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
+import subprocess
+import sys
 import argparse
 import wandb
 from stable_baselines3 import PPO
 from clearml import Task
-from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
+from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.vec_env import DummyVecEnv
-from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.monitor import Monitor
 import pybullet as p
 from robotics_wrapper_v1 import OT2Env
 
 # Add shimmy as a requirement
-Task.add_requirements("shimmy>=2.0")
-os.system("pip install shimmy>=2.0")
+#Task.add_requirements("shimmy>=2.0")
+#os.system("pip install shimmy>=2.0")
 
 # Add pydantic and typing-extensions as requirements
-os.system("pip install pydantic>=2.10.5 typing-extensions>=4.12.2")
+#os.system("pip install pydantic>=2.10.5 typing-extensions>=4.12.2")
+
+# Debugging Environment
+print(f"Python executable: {sys.executable}")
+print(f"Python version: {sys.version}")
+
+# Add shimmy as a requirement
+Task.add_requirements("shimmy>=2.0")
+try:
+    print("Installing shimmy...")
+    shimmy_result = subprocess.run(["pip", "install", "shimmy>=2.0"], capture_output=True, text=True)
+    print("Shimmy installation output:", shimmy_result.stdout)
+    print("Shimmy installation error:", shimmy_result.stderr)
+except Exception as e:
+    print(f"Error installing shimmy: {e}")
+
+# Add pydantic and typing-extensions as requirements
+try:
+    print("Installing pydantic and typing-extensions...")
+    dependencies_result = subprocess.run(
+        ["pip", "install", "pydantic>=2.10.5", "typing-extensions>=4.12.2"], capture_output=True, text=True
+    )
+    print("Dependencies installation output:", dependencies_result.stdout)
+    print("Dependencies installation error:", dependencies_result.stderr)
+except Exception as e:
+    print(f"Error installing pydantic and typing-extensions: {e}")
+
+# Verify installed versions
+try:
+    import pydantic
+    import typing_extensions
+    print(f"Pydantic version: {pydantic.VERSION}")
+    print(f"Typing-extensions version: {typing_extensions.__version__}")
+except ImportError as e:
+    print(f"Error importing dependencies: {e}")
+
+# Ensure Direct mode for PyBullet (headless execution)
+try:
+    physicsClient = p.connect(p.DIRECT)
+    p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
+    print("PyBullet initialized in DIRECT mode.")
+except Exception as e:
+    print(f"Error initializing PyBullet: {e}")
 
 # Ensure Direct mode for PyBullet (headless execution)
 physicsClient = p.connect(p.DIRECT)
