@@ -53,33 +53,51 @@ class ClearMLCallback(BaseCallback):
         self.task = task
 
     def _on_step(self) -> bool:
-        # Log the reward
-        reward = self.locals['rewards']
-        self.task.get_logger().report_scalar(
-            title='Reward',
-            series='reward',
-            value=reward,
-            iteration=self.num_timesteps
-        )
+        # Log the average reward
+        rewards = self.locals.get('rewards', None)
+        if rewards is not None:
+            avg_reward = float(sum(rewards) / len(rewards)) if len(rewards) > 0 else 0
+            self.task.get_logger().report_scalar(
+                title='Reward',
+                series='reward',
+                value=avg_reward,
+                iteration=self.num_timesteps
+            )
+
+        # Log loss
+        if 'loss' in self.locals:
+            loss = self.locals['loss']
+            self.task.get_logger().report_scalar(
+                title='Loss',
+                series='loss',
+                value=loss,
+                iteration=self.num_timesteps
+            )
+
+        # Log entropy (if accessible)
+        if 'entropy' in self.locals:
+            entropy = self.locals['entropy']
+            self.task.get_logger().report_scalar(
+                title='Entropy',
+                series='entropy',
+                value=entropy,
+                iteration=self.num_timesteps
+            )
+
+        # Log value loss (if accessible)
+        if 'value_loss' in self.locals:
+            value_loss = self.locals['value_loss']
+            self.task.get_logger().report_scalar(
+                title='Value Loss',
+                series='value_loss',
+                value=value_loss,
+                iteration=self.num_timesteps
+            )
+
         return True
 
 # Initialize the callback
 clearml_callback = ClearMLCallback(task)
-
-# Initialize the evaluation environment
-eval_env = OT2Env(render=False, max_steps=1000)
-eval_env = Monitor(eval_env)
-eval_env = DummyVecEnv([lambda: eval_env])
-
-# Initialize the evaluation callback
-eval_callback = EvalCallback(
-    eval_env,
-    best_model_save_path='./logs/',
-    log_path='./logs/',
-    eval_freq=5000,
-    deterministic=True,
-    render=False
-)
 
 # Configure the PPO model with hyperparameters
 model = PPO(
@@ -93,7 +111,7 @@ model = PPO(
 )
 
 # Train the model
-model.learn(total_timesteps=1000000, callback=[clearml_callback, eval_callback])
+model.learn(total_timesteps=1000000, callback=[clearml_callback])
 
 # Save the trained model
 model.save("ppo_ot2_model.zip")

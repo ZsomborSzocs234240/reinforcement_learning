@@ -21,7 +21,7 @@ class OT2Env(gym.Env):
         # keep track of the number of steps
         self.steps = 0
 
-    def reset(self, seed=None):
+    def reset(self, seed: int = None):
         # being able to set a seed is required for reproducibility
         if seed is not None:
             np.random.seed(seed)
@@ -47,6 +47,10 @@ class OT2Env(gym.Env):
         robot_id = next(iter(observation.keys()))
         pipette_position = np.array(observation[robot_id]['pipette_position'], dtype=np.float32)
         observation = np.concatenate([pipette_position, self.goal_position]).astype(np.float32)
+
+        # Calculate the initial distance to the goal
+        self.initial_distance = np.linalg.norm(pipette_position - self.goal_position)
+        self.reached_halfway = False  # Track whether the halfway point is reached
 
         # Reset the number of steps
         self.steps = 0
@@ -81,33 +85,22 @@ class OT2Env(gym.Env):
         # Distance based reward
         reward -= 10 * distance_to_goal
 
+        # Bonus reward for reaching 50% of the initial distance
+        if not self.reached_halfway and distance_to_goal < 0.5 * self.initial_distance:
+            reward += 20.0  # Small bonus reward
+            self.reached_halfway = True  # Ensure the reward is given only once
+
         # Penalize large actions
         action_penalty = np.linalg.norm(action[:3]) * 0.2  # Scale penalty
         reward -= action_penalty
 
-        # Success reward
-        dynamic_threshold = max(0.01, 0.1 / (self.steps + 1))
-
-        if distance_to_goal < dynamic_threshold:
-            # we can also give the agent a positive reward for completing the task
-            reward += 100.0
+        # Fixed threshold for success
+        accuracy_threshold = 0.01  # Set 0.01 for 8.8 C, or 0.001 for 8.8 D
+        if distance_to_goal < accuracy_threshold:
+            reward += 100.0  # Positive reward for success
             terminated = True
         else:
             terminated = False
-
-        # Panalize boundary violations
-        workspace_bounds = {
-            "x": (-0.2600, 0.1800),
-            "y": (-0.2600, 0.1300),
-            "z": (0.0800, 0.2000)
-        }
-        if not (
-            workspace_bounds["x"][0] <= pipette_position[0] <= workspace_bounds["x"][1] and
-            workspace_bounds["y"][0] <= pipette_position[1] <= workspace_bounds["y"][1] and
-            workspace_bounds["z"][0] <= pipette_position[2] <= workspace_bounds["z"][1]
-        ):
-            out_of_bounds_penalty = 10.0
-            reward -= out_of_bounds_penalty
 
         # Print information
         print(f"Reward: {reward}")
@@ -118,9 +111,3 @@ class OT2Env(gym.Env):
         self.steps += 1
 
         return observation, reward, terminated, False, {}
-
-    def render(self, mode='human'):
-        pass
-    
-    def close(self):
-        self.sim.close()
