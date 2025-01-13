@@ -17,6 +17,9 @@ from robotics_wrapper_v1 import OT2Env
 Task.add_requirements("shimmy>=2.0")
 os.system("pip install shimmy>=2.0")
 
+# Add pydantic and typing-extensions as requirements
+os.system("pip install pydantic>=2.10.5 typing-extensions>=4.12.2")
+
 # Ensure Direct mode for PyBullet (headless execution)
 physicsClient = p.connect(p.DIRECT)
 p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
