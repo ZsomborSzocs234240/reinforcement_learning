@@ -90,24 +90,25 @@ class OT2Env(gym.Env):
             reward += 20.0  # Small bonus reward
             self.reached_halfway = True  # Ensure the reward is given only once
 
-        # Penalize large actions
-        action_penalty = np.linalg.norm(action[:3]) * 0.2  # Scale penalty
-        reward -= action_penalty
-
         # Fixed threshold for success
-        accuracy_threshold = 0.01  # Set 0.01 for 8.8 C, or 0.001 for 8.8 D
-        if distance_to_goal < accuracy_threshold:
-            reward += 100.0  # Positive reward for success
-            terminated = True
-        else:
-            terminated = False
+        accuracy_threshold = 0.01  # Set to 0.01 for 8.8 C, or 0.001 for 8.8 D
+        terminated = distance_to_goal < accuracy_threshold
 
-        # Print information
+        # Add truncation condition based on step limit
+        truncated = self.steps >= self.max_steps
+
+        # Reward for successful completion
+        if terminated:
+            reward += 100.0  # Large bonus reward for success
+            print("Task successfully completed!")
+
+        # Print debug information
         print(f"Reward: {reward}")
-        print(f"Action penalty: {action_penalty}")
         print(f"Terminated: {terminated}")
+        print(f"Truncated: {truncated}")
 
-        # increment the number of steps
+        # Increment the step counter
         self.steps += 1
 
-        return observation, reward, terminated, False, {}
+        # Return updated observation, reward, termination flag, truncation flag, and additional info
+        return observation, reward, terminated, truncated, {}
