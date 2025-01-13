@@ -14,28 +14,21 @@ from stable_baselines3.common.monitor import Monitor
 import pybullet as p
 from robotics_wrapper_v1 import OT2Env
 
-# Add shimmy as a requirement
-#Task.add_requirements("shimmy>=2.0")
-#os.system("pip install shimmy>=2.0")
-
-# Add pydantic and typing-extensions as requirements
-#os.system("pip install pydantic>=2.10.5 typing-extensions>=4.12.2")
-
 # Debugging Environment
 print(f"Python executable: {sys.executable}")
 print(f"Python version: {sys.version}")
 
-# Install dependencies using os.system
-print("Installing dependencies...")
-try:
-    os.system("pip install shimmy>=2.0")
-    os.system("pip install pydantic>=2.10.5 typing-extensions>=4.12.2")
-    print("Dependencies installed successfully.")
-except Exception as e:
-    print(f"Error installing dependencies: {e}")
-    sys.exit(1)
+# Set W&B API key (replace with your actual API key)
+os.environ["WANDB_API_KEY"] = "90f3b912bde0df3f0901f8dae27fcf167f143d84"
 
-# Verify installed versions
+# Add shimmy as a requirement
+Task.add_requirements("shimmy>=2.0")
+os.system("pip install shimmy>=2.0")
+
+# Add pydantic and typing-extensions as requirements
+os.system("pip install pydantic>=2.10.5 typing-extensions>=4.12.2")
+
+# Verify the installation
 try:
     import pydantic
     import typing_extensions
@@ -43,28 +36,6 @@ try:
     print("Typing-extensions installed successfully.")
 except ImportError as e:
     print(f"Error importing dependencies: {e}")
-    sys.exit(1)
-
-# Ensure Direct mode for PyBullet (headless execution)
-try:
-    physicsClient = p.connect(p.DIRECT)
-    p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
-    print("PyBullet initialized in DIRECT mode.")
-except Exception as e:
-    print(f"Error initializing PyBullet: {e}")
-    sys.exit(1)
-
-# Initialize ClearML task
-try:
-    task = Task.init(
-        project_name='Mentor Group K/Group 2',
-        task_name='OT2 Experiment 2 234240'
-    )
-    task.set_base_docker('deanis/2023y2b-rl:latest')
-    task.execute_remotely(queue_name="default")
-    print("ClearML task initialized successfully.")
-except Exception as e:
-    print(f"Error initializing ClearML task: {e}")
     sys.exit(1)
 
 # Ensure Direct mode for PyBullet (headless execution)
@@ -95,7 +66,7 @@ task.connect(vars(args))
 # Initialize Weights & Biases (W&B)
 wandb.init(
     project="RL_OT2",
-    name="OT2 Experiment 2 234240",
+    name="OT2 Experiment 2 - Fine Tuned",
     config={
         "learning_rate": args.learning_rate,
         "n_steps": args.n_steps,
