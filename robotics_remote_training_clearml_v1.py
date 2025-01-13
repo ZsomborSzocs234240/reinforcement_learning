@@ -66,7 +66,7 @@ task.connect(vars(args))
 # Initialize Weights & Biases (W&B)
 wandb.init(
     project="RL_OT2",
-    name="OT2 Experiment 2 - Fine Tuned",
+    name="OT2 Experiment 2 - Fine Tuned 2",
     config={
         "learning_rate": args.learning_rate,
         "n_steps": args.n_steps,
