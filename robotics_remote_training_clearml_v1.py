@@ -3,6 +3,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 os.environ['SDL_AUDIODRIVER'] = 'dummy'
 import argparse
+import wandb
 from stable_baselines3 import PPO
 from clearml import Task
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
@@ -40,6 +41,20 @@ args = parser.parse_args()
 
 # Log hyperparameters to ClearML
 task.connect(vars(args))
+
+# Initialize Weights & Biases (W&B)
+wandb.init(
+    project="RL_OT2",
+    name="OT2 Experiment 2 234240",
+    config={
+        "learning_rate": args.learning_rate,
+        "n_steps": args.n_steps,
+        "batch_size": args.batch_size,
+        "n_epochs": args.n_epochs,
+        "total_timesteps": 1000000,
+        "accuracy_threshold": 0.01  # (8.8 C or 8.8 D)
+    }
+)
 
 # Initialize the custom environment
 env = OT2Env(render=False, max_steps=1000)
